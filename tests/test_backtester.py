@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 from trading_engine.testing.defaults import default_runtime_config, default_test_settings
 from trading_engine.testing.helpers import StubStrategy
+
 from trading_backtest.engine import BacktestEngine
 from trading_backtest.loader import ReplayTick
 
@@ -30,21 +31,19 @@ class TestBacktestEngine(unittest.TestCase):
 
     def test_clock_advances(self):
         ticks = [
-            ReplayTick(datetime.datetime(2026, 6, 12, 9, 0, 0), "18000", 1, 0),
-            ReplayTick(datetime.datetime(2026, 6, 12, 9, 0, 1), "18001", 1, 0),
+            ReplayTick(datetime.datetime(2026, 6, 12, 9, 0, 0), 18000.0, 1, 0),
+            ReplayTick(datetime.datetime(2026, 6, 12, 9, 0, 1), 18001.0, 1, 0),
         ]
         engine = _engine("TXFR1", [datetime.date(2026, 6, 12)])
         with patch("trading_backtest.loader.iter_replay_ticks", return_value=iter(ticks)):
             engine.run()
-        self.assertEqual(
-            engine.clock(), ticks[-1].datetime.timestamp()
-        )
+        self.assertEqual(engine.clock(), ticks[-1].datetime.timestamp())
 
     def test_pending_timeout_before_tick_processing(self):
         t0 = datetime.datetime(2026, 6, 12, 9, 0, 0)
         t1 = datetime.datetime(2026, 6, 12, 9, 0, 10)
-        tick1 = ReplayTick(t0, "18000", 1, 0)
-        tick2 = ReplayTick(t1, "18001", 1, 0)
+        tick1 = ReplayTick(t0, 18000.0, 1, 0)
+        tick2 = ReplayTick(t1, 18001.0, 1, 0)
         engine = _engine("TXFR1", [t0.date()])
         pending_at_on_tick: list[bool] = []
         original_on_tick = engine.host.on_tick
@@ -72,9 +71,9 @@ class TestBacktestEngine(unittest.TestCase):
 
     def test_premarket_ticks_are_filtered(self):
         ticks = [
-            ReplayTick(datetime.datetime(2026, 6, 12, 8, 40), "17900", 100, 0),
-            ReplayTick(datetime.datetime(2026, 6, 12, 8, 43), "17910", 100, 0),
-            ReplayTick(datetime.datetime(2026, 6, 12, 8, 46), "18000", 1, 0),
+            ReplayTick(datetime.datetime(2026, 6, 12, 8, 40), 17900.0, 100, 0),
+            ReplayTick(datetime.datetime(2026, 6, 12, 8, 43), 17910.0, 100, 0),
+            ReplayTick(datetime.datetime(2026, 6, 12, 8, 46), 18000.0, 1, 0),
         ]
         engine = _engine("TXFR1", [datetime.date(2026, 6, 12)])
         seen: list[datetime.datetime] = []
@@ -95,9 +94,7 @@ class TestBacktestEngine(unittest.TestCase):
 
         from trading_engine.core.order_events import FUTURES_DEAL
 
-        premarket_tick = ReplayTick(
-            datetime.datetime(2026, 6, 12, 8, 40, 0), "18000", 1, 1
-        )
+        premarket_tick = ReplayTick(datetime.datetime(2026, 6, 12, 8, 40, 0), 18000.0, 1, 1)
         engine = _engine("TXFR1", [datetime.date(2026, 6, 12)])
         engine.broker.latency_ms = 0
         contract = engine.broker.resolve_contract("TXFR1")

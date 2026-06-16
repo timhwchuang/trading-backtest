@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import datetime
-from typing import Any, List
+from typing import Any
 
 from trading_engine.adapters.mock import MockOrderAdapter
 from trading_engine.calendar.taifex import is_trading_session
@@ -46,7 +46,7 @@ class BacktestEngine:
     def __init__(
         self,
         code: str,
-        dates: List[datetime.date],
+        dates: list[datetime.date],
         strategy: Strategy,
         *,
         cache_dir=DEFAULT_CACHE_DIR,

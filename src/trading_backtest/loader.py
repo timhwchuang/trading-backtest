@@ -6,9 +6,10 @@ import csv
 import datetime
 import gzip
 import logging
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from pathlib import Path
-from typing import IO, Iterable, Iterator, List, Optional
+from typing import IO
 
 logger = logging.getLogger(__name__)
 
@@ -26,13 +27,16 @@ TICK_CSV_FIELDS = [
 
 _KBARS_CSV_FIELDS = ["ts", "Open", "High", "Low", "Close", "Volume"]
 
+# Warn when a single tick jumps more than this fraction from the previous close.
+_MAX_PRICE_JUMP_RATIO = 0.05
+
 
 @dataclass
 class ReplayTick:
     """Minimal replay unit compatible with ``TradingEngine.on_tick``."""
 
     datetime: datetime.datetime
-    close: str
+    close: float
     volume: int
     tick_type: int
     bid_price: float = 0.0
@@ -57,9 +61,7 @@ def cache_gz_path(cache_dir: Path, code: str, date: datetime.date) -> Path:
     return Path(cache_dir) / f"{code}_{date.isoformat()}.csv.gz"
 
 
-def resolve_tick_cache_path(
-    cache_dir: Path, code: str, date: datetime.date
-) -> Optional[Path]:
+def resolve_tick_cache_path(cache_dir: Path, code: str, date: datetime.date) -> Path | None:
     gz = cache_gz_path(cache_dir, code, date)
     plain = cache_path(cache_dir, code, date)
     if gz.is_file():
@@ -76,21 +78,54 @@ def _open_tick_csv_reader(path: Path) -> IO[str]:
     return path.open("r", encoding="utf-8", newline="")
 
 
-def load_ticks_csv(path: Path) -> List[ReplayTick]:
-    ticks: List[ReplayTick] = []
+def _validate_and_sort_ticks(ticks: list[ReplayTick], path: Path) -> list[ReplayTick]:
+    """Warn on data-quality issues; return ticks sorted by datetime."""
+    if not ticks:
+        return ticks
+
+    label = Path(path).name
+    seen_ts: set[datetime.datetime] = set()
+    prev_close: float | None = None
+    for tick in ticks:
+        if tick.close <= 0:
+            logger.warning("%s: non-positive close %.4f at %s", label, tick.close, tick.datetime)
+        if tick.datetime in seen_ts:
+            logger.warning("%s: duplicate timestamp %s", label, tick.datetime)
+        seen_ts.add(tick.datetime)
+        if prev_close is not None and prev_close > 0:
+            jump = abs(tick.close - prev_close) / prev_close
+            if jump > _MAX_PRICE_JUMP_RATIO:
+                logger.warning(
+                    "%s: large price jump %.1f%% (%s -> %s) at %s",
+                    label,
+                    jump * 100,
+                    prev_close,
+                    tick.close,
+                    tick.datetime,
+                )
+        prev_close = tick.close
+
+    sorted_ticks = sorted(ticks, key=lambda t: t.datetime)
+    if any(sorted_ticks[i].datetime != ticks[i].datetime for i in range(len(ticks))):
+        logger.warning("%s: ticks were not monotonically sorted; re-sorted by datetime", label)
+    return sorted_ticks
+
+
+def load_ticks_csv(path: Path) -> list[ReplayTick]:
+    ticks: list[ReplayTick] = []
     with _open_tick_csv_reader(Path(path)) as f:
         for row in csv.DictReader(f):
             ticks.append(
                 ReplayTick(
                     datetime=datetime.datetime.fromisoformat(row["datetime"]),
-                    close=row["close"],
+                    close=float(row["close"]),
                     volume=int(row["volume"]),
                     tick_type=int(row["tick_type"]),
                     bid_price=float(row["bid_price"]),
                     ask_price=float(row["ask_price"]),
                 )
             )
-    return ticks
+    return _validate_and_sort_ticks(ticks, path)
 
 
 def iter_replay_ticks(
@@ -133,8 +168,8 @@ def save_kbars_csv(bars: Iterable[KBarRecord], path: Path) -> int:
     return count
 
 
-def load_kbars_csv(path: Path) -> List[KBarRecord]:
-    bars: List[KBarRecord] = []
+def load_kbars_csv(path: Path) -> list[KBarRecord]:
+    bars: list[KBarRecord] = []
     with Path(path).open("r", encoding="utf-8", newline="") as f:
         for row in csv.DictReader(f):
             bars.append(
@@ -151,7 +186,7 @@ def load_kbars_csv(path: Path) -> List[KBarRecord]:
     return bars
 
 
-def date_range(start: datetime.date, end: datetime.date) -> List[datetime.date]:
+def date_range(start: datetime.date, end: datetime.date) -> list[datetime.date]:
     days = (end - start).days
     return [start + datetime.timedelta(days=i) for i in range(days + 1)]
 
@@ -162,8 +197,8 @@ def iter_kbars_in_range(
     end: datetime.date,
     *,
     cache_dir: Path = DEFAULT_CACHE_DIR,
-) -> List[KBarRecord]:
-    bars: List[KBarRecord] = []
+) -> list[KBarRecord]:
+    bars: list[KBarRecord] = []
     for date in date_range(start, end):
         path = kbars_cache_path(cache_dir, code, date)
         if not path.is_file():

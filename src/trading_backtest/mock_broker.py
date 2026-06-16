@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import datetime
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from types import SimpleNamespace
-from typing import Any, Callable, List, Optional
+from typing import Any
 
 from trading_engine.calendar.taifex import is_at_or_after
 from trading_engine.core.order_events import FUTURES_DEAL, FUTURES_ORDER
@@ -15,10 +16,10 @@ from trading_backtest.loader import DEFAULT_CACHE_DIR, iter_kbars_in_range
 
 @dataclass
 class _KBars:
-    High: List[float]
-    Low: List[float]
-    Close: List[float]
-    ts: List[datetime.datetime] = field(default_factory=list)
+    High: list[float]
+    Low: list[float]
+    Close: list[float]
+    ts: list[datetime.datetime] = field(default_factory=list)
 
 
 class MockBroker:
@@ -49,7 +50,7 @@ class MockBroker:
         self.futopt_account = None
         self._seq = 0
         self.inflight: list[dict[str, Any]] = []
-        self.current_dt: Optional[datetime.datetime] = None
+        self.current_dt: datetime.datetime | None = None
 
     def resolve_contract(self, code: str) -> SimpleNamespace:
         return SimpleNamespace(code=code)
@@ -87,10 +88,10 @@ class MockBroker:
         end_date = datetime.date.fromisoformat(end)
         bars = iter_kbars_in_range(code, start_date, end_date, cache_dir=self.cache_dir)
         current = self.current_dt
-        highs: List[float] = []
-        lows: List[float] = []
-        closes: List[float] = []
-        tss: List[datetime.datetime] = []
+        highs: list[float] = []
+        lows: list[float] = []
+        closes: list[float] = []
+        tss: list[datetime.datetime] = []
         for bar in bars:
             if current is not None:
                 if bar.ts > current:
@@ -106,15 +107,13 @@ class MockBroker:
     def _slippage_for(
         self,
         tick: Any,
-        intent: Optional[str],
+        intent: str | None,
         base_slippage: float,
     ) -> float:
         slippage = base_slippage
         if tick.volume > self.BLOWOUT_VOL:
             slippage = self.BLOWOUT_SLIP
-        if intent == "exit" and is_at_or_after(
-            tick.datetime, self.session_force_flatten_time
-        ):
+        if intent == "exit" and is_at_or_after(tick.datetime, self.session_force_flatten_time):
             slippage = self.FLATTEN_SLIP
         if self.spread_calibration:
             ask = getattr(tick, "ask_price", None)
@@ -124,7 +123,7 @@ class MockBroker:
                 slippage = max(slippage, half_spread)
         return slippage
 
-    def _intent_for(self, host: Any, order_id: str) -> Optional[str]:
+    def _intent_for(self, host: Any, order_id: str) -> str | None:
         if getattr(host, "pending_order_id", None) == order_id:
             return getattr(host, "pending_intent", None)
         return None
@@ -137,7 +136,7 @@ class MockBroker:
             self.inflight.remove(ord)
             intent = self._intent_for(host, ord["order_id"])
             slippage = self._slippage_for(tick, intent, self.NORMAL_SLIP)
-            close = float(tick.close)
+            close = tick.close
             limit = ord["limit_price"]
             is_buy = ord["action"] == "Buy"
             if is_buy:
