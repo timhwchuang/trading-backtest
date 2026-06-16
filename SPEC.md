@@ -29,7 +29,9 @@ This document is the **single source of truth** for this standalone repo. All RE
 | Position sizing, go-live decisions based on equity curve / Sharpe / max drawdown alone | **No** |
 | Broad external UAT without paper-trade fill validation | **No** |
 
-Optional integrator apps (e.g. `theman`) may wrap this package with ports, storage, and sweep tooling. That integration lives outside this repo.
+Optional integrator apps (e.g. `trading-app`) may wrap this package with ports, storage, and sweep tooling. That integration lives outside this repo.
+
+**Implementation detail**: [docs/BACKTEST_IMPLEMENTATION.md](docs/BACKTEST_IMPLEMENTATION.md)
 
 ---
 
