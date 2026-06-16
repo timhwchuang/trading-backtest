@@ -111,6 +111,28 @@ def kbars_cache_path(cache_dir: Path, code: str, date: datetime.date) -> Path:
     return Path(cache_dir) / f"{code}_kbars_{date.isoformat()}.csv"
 
 
+def save_kbars_csv(bars: Iterable[KBarRecord], path: Path) -> int:
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    count = 0
+    with path.open("w", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=_KBARS_CSV_FIELDS)
+        writer.writeheader()
+        for bar in bars:
+            writer.writerow(
+                {
+                    "ts": bar.ts.isoformat(),
+                    "Open": bar.Open,
+                    "High": bar.High,
+                    "Low": bar.Low,
+                    "Close": bar.Close,
+                    "Volume": bar.Volume,
+                }
+            )
+            count += 1
+    return count
+
+
 def load_kbars_csv(path: Path) -> List[KBarRecord]:
     bars: List[KBarRecord] = []
     with Path(path).open("r", encoding="utf-8", newline="") as f:
@@ -157,6 +179,9 @@ __all__ = [
     "ReplayTick",
     "iter_kbars_in_range",
     "iter_replay_ticks",
+    "kbars_cache_path",
+    "load_kbars_csv",
     "load_ticks_csv",
     "resolve_tick_cache_path",
+    "save_kbars_csv",
 ]
