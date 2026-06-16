@@ -263,7 +263,38 @@ Defaults are **author-tuned heuristics**, not calibrated from live fill statisti
 - **Execution realism** is severely limited. TAIFEX microstructure (especially during blowouts or illiquid periods) is not modeled.
 - **Slippage parameters** are not validated against your broker's fill history.
 - **Tick cache quality** drives ~80% of backtest believability; this repo does not validate your data.
-- **No built-in backtest-vs-paper fill comparison** — you must build this yourself.
+- **Fill comparison is basic** — `compare_fill_audits` reports aggregate stats; you still need paper/live logs and manual recalibration.
+
+### Calculating realistic expectancy
+
+`trading-backtest` does **not** model transaction costs. `FILL_AUDIT.pnl_points` (when present) reflects **gross** price difference only. Before using backtest output for sizing or go-live decisions, apply costs **outside** this package:
+
+| Cost component | Typical source | Notes |
+|----------------|----------------|-------|
+| Broker commission | Your broker fee schedule | Per-side or round-turn; varies by VIP tier |
+| Futures transaction tax (TW) | TAIFEX / regulations | Often on sell side for index futures |
+| Slippage beyond MockBroker | Paper/live `FILL_AUDIT` | Backtest slip is heuristic; add conservative buffer |
+| Opportunity cost of unfilled IOC | Paper cancel rate | Backtest may overstate fill rate |
+
+**Minimal workflow:**
+
+1. Parse `FILL_AUDIT` from backtest logs (`parse_fill_audits`) or use your app's reporting layer.
+2. Subtract per-trade costs: `net_pnl = gross_pnl - commission - tax - extra_slippage_buffer`.
+3. Compare **net** expectancy against paper trade over the same calendar window — not just backtest gross PnL.
+4. If paper median slippage exceeds backtest, raise `MockBroker` slip params before re-running sweeps.
+
+Round-turn example (illustrative — use your broker's actual rates):
+
+```python
+COMMISSION_PER_SIDE = 20  # TWD, example
+TAX_RATE_SELL = 0.00002   # example; verify current regulation
+
+def net_exit_pnl(gross_pts: float, *, is_sell: bool, extra_slip_pts: float = 1.0) -> float:
+    """Convert gross points to net after illustrative costs (points space)."""
+    return gross_pts - extra_slip_pts - (COMMISSION_PER_SIDE * 2 / POINT_VALUE_TWD)
+```
+
+`POINT_VALUE_TWD` depends on contract (e.g. TXF ≈ 200 TWD/point). Keep cost logic in your research / app layer (`theman` reporting, notebooks, etc.) — not in `trading-backtest`.
 
 ### Recommended validation pipeline
 

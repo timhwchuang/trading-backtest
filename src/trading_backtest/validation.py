@@ -214,6 +214,9 @@ def hash_audit_records(records: Iterable[tuple[str, str]]) -> str:
     return hasher.hexdigest()
 
 
+audit_hash_from_records = hash_audit_records  # back-compat alias
+
+
 class AuditCaptureHandler(logging.Handler):
     """Capture SIGNAL_AUDIT / FILL_AUDIT / DAILY_SUMMARY from trading_engine logger."""
 
@@ -264,6 +267,3 @@ __all__ = [
     "slippage_vs_limit_pts",
     "slippage_vs_signal_pts",
 ]
-
-# Back-compat alias
-audit_hash_from_records = hash_audit_records

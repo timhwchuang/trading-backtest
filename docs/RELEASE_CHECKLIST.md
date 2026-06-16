@@ -11,7 +11,11 @@ Use this before tagging `v0.1.0` on GitHub.
 - [ ] `pyproject.toml` `Documentation` URL → `SPEC.md`
 - [ ] `src/trading_backtest/_version.py` matches tag (`0.1.0`)
 - [ ] `CHANGELOG.md` date and `[0.1.0]` link ready
-- [ ] No committed `*.egg-info/` or `.ruff_cache/` (see `.gitignore`)
+- [ ] No committed `*.egg-info/` or `.ruff_cache/` (see `.gitignore`); remove local artifacts before tag:
+  ```bash
+  rm -rf src/*.egg-info .ruff_cache
+  git ls-files '*.egg-info'  # should print nothing
+  ```
 
 ## Dependency pin (document in release)
 
@@ -37,7 +41,7 @@ git push origin v0.1.0
 
 - [ ] GitHub Release notes — copy from `docs/releases/v0.1.0.md`
 - [ ] Verify CI green on `main` after push
-- [ ] Update workspace `docs/three-repo/README.md` Backtest status → ✅
+- [ ] Update workspace `docs/three-repo/README.md` Backtest status → ✅ *(internal monorepo only)*
 - [ ] Notify collaborators: **research alpha**, not production execution simulator
 
 ## Scope reminder (do not oversell)
