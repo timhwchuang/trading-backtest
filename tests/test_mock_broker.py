@@ -57,6 +57,17 @@ class TestMockBrokerMatching(unittest.TestCase):
         broker.process_matching_queue(tick, strategy)
         return strategy.events
 
+    def test_buy_fill_with_string_close_from_csv_replay(self):
+        """Regression: tick_cache CSV yields str close; must not TypeError vs limit."""
+        epoch = datetime.datetime(2026, 6, 12, 9, 0, 0).timestamp()
+        broker = self._broker_at(epoch, latency_ms=0)
+        strategy = _RecordingStrategy()
+        tick = ReplayTick(datetime.datetime(2026, 6, 12, 9, 0, 0), "18000", 1, 1)
+        events = self._place_and_match(broker, strategy, _make_buy_order(18003), tick)
+        deals = [e for e in events if e[0] == FUTURES_DEAL]
+        self.assertEqual(len(deals), 1)
+        self.assertAlmostEqual(deals[0][1]["price"], 18000.5)
+
     def test_buy_fill_normal_slip(self):
         epoch = datetime.datetime(2026, 6, 12, 9, 0, 0).timestamp()
         broker = self._broker_at(epoch, latency_ms=0)

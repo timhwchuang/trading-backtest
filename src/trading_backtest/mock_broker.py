@@ -128,6 +128,11 @@ class MockBroker:
             return getattr(host, "pending_intent", None)
         return None
 
+    @staticmethod
+    def _tick_close(tick: Any) -> float:
+        """CSV replay uses str close; live ticks may already be float."""
+        return float(tick.close)
+
     def process_matching_queue(self, tick: Any, host: Any) -> None:
         tick_ts = tick.datetime.timestamp()
         for ord in list(self.inflight):
@@ -136,7 +141,7 @@ class MockBroker:
             self.inflight.remove(ord)
             intent = self._intent_for(host, ord["order_id"])
             slippage = self._slippage_for(tick, intent, self.NORMAL_SLIP)
-            close = tick.close
+            close = self._tick_close(tick)
             limit = ord["limit_price"]
             is_buy = ord["action"] == "Buy"
             if is_buy:

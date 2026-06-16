@@ -4,6 +4,14 @@ All notable changes to `trading-backtest` are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).  
 Versioning follows [SemVer](https://semver.org/) and tracks `trading-engine` major per spec (0.x = API may still evolve).
 
+## [0.1.1] - 2026-06-16
+
+### Fixed
+
+- `MockBroker.process_matching_queue`: coerce `tick.close` with `float()` so CSV replay ticks (str close) match against limit price without `TypeError`.
+
+[0.1.1]: https://github.com/timhwchuang/trading-backtest/releases/tag/v0.1.1
+
 ## [0.1.0] - 2026-06-16
 
 Initial public release of the deterministic tick replay driver for `trading-engine` (completes the public three-repo core with trading-engine + strategy-vwap-momentum).
