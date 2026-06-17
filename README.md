@@ -52,14 +52,14 @@ Replays historical tick data through the **exact same `TradingEngine`** used for
 pip install "trading-backtest @ git+https://github.com/timhwchuang/trading-backtest.git@v0.1.0"
 
 # 搭配 trading-engine（通常一起鎖）
-pip install "trading-engine @ git+https://github.com/timhwchuang/trading-engine.git@v0.2.0"
+pip install "trading-engine @ git+https://github.com/timhwchuang/trading-engine.git@v0.2.2"
 ```
 
 在你的 app / research script 的 `pyproject.toml`：
 
 ```toml
 dependencies = [
-  "trading-engine @ git+https://github.com/timhwchuang/trading-engine.git@v0.2.0",
+  "trading-engine @ git+https://github.com/timhwchuang/trading-engine.git@v0.2.2",
   "trading-backtest @ git+https://github.com/timhwchuang/trading-backtest.git@v0.1.0",
 ]
 ```

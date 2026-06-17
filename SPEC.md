@@ -1,7 +1,7 @@
 # trading-backtest — Authoritative Spec
 
 > **Package**: `trading-backtest` · **Import**: `trading_backtest` · **Version**: 0.1.0  
-> **Depends on**: `trading-engine>=0.2.0,<1.0` (same major alignment)
+> **Depends on**: `trading-engine>=0.2.2,<1.0` (same major alignment)
 
 This document is the **single source of truth** for this standalone repo. All README, release notes, and packaging metadata should point here — not to paths that existed only in the old monorepo layout.
 
@@ -334,7 +334,7 @@ Coverage focus:
 - BacktestEngine: clock advance, pending timeout ordering, premarket `on_tick` filter vs matching, empty run.
 - Loader: sort / duplicate / price anomaly warnings.
 
-CI installs pinned `trading-engine@v0.2.0`, runs ruff + tests (mypy non-blocking).
+CI installs pinned `trading-engine@v0.2.2`, runs ruff + tests (mypy non-blocking).
 
 ---
 
@@ -346,7 +346,7 @@ CI installs pinned `trading-engine@v0.2.0`, runs ruff + tests (mypy non-blocking
 
 ```toml
 dependencies = [
-  "trading-engine @ git+https://github.com/timhwchuang/trading-engine.git@v0.2.0",
+  "trading-engine @ git+https://github.com/timhwchuang/trading-engine.git@v0.2.2",
   "trading-backtest @ git+https://github.com/timhwchuang/trading-backtest.git@v0.1.0",
 ]
 ```
