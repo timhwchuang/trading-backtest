@@ -1,3 +1,6 @@
+> **此 repo 已封存（Archived）。** 開發已移至 monorepo [**tfx-trading**](https://github.com/timhwchuang/tfx-trading) → [`packages/trading-backtest`](https://github.com/timhwchuang/tfx-trading/tree/main/packages/trading-backtest)。  
+> 歷史 tag / release 仍可使用，**不再更新**。請改 `git clone git@github.com:timhwchuang/tfx-trading.git`。
+
 # trading-backtest
 
 **Deterministic tick replay driver for `trading-engine`.**
